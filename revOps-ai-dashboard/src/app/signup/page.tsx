@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import OAuthButton from '../components/OAuthButton';
 import LanguageSelector from '../components/LanguageSelector';
-import DeviceVerificationModal from '../components/DeviceVerificationModal';
+
 import ComprehensiveSignupForm from '../components/ComprehensiveSignupForm';
 import { useTranslation } from '../hooks/useTranslation';
 
@@ -23,7 +23,7 @@ export default function SignupPage() {
     setEmailLoading(true);
     
     try {
-      console.log('Comprehensive signup data:', formData);
+      console.log('V1 signup data:', formData);
       
       const response = await fetch('/api/auth/signup', {
         method: 'POST',
@@ -34,37 +34,22 @@ export default function SignupPage() {
           fullName: formData.fullName,
           email: formData.email,
           password: formData.password,
-          phoneNumber: formData.phoneNumber,
           businessName: formData.businessName,
-          businessType: formData.businessType,
-          businessSize: formData.businessSize,
-          website: formData.website,
-          timezone: formData.timezone,
-          currency: formData.currency,
-          preferredLanguage: formData.preferredLanguage,
-          revenueGoal: formData.revenueGoal,
-          communicationChannels: formData.communicationChannels,
-          targetMonthlyRevenue: formData.targetMonthlyRevenue && !isNaN(parseInt(formData.targetMonthlyRevenue)) ? parseInt(formData.targetMonthlyRevenue) : null,
+          timezone: formData.timezone || 'UTC',
+          currency: formData.currency || 'USD',
         }),
       });
 
       const data = await response.json();
 
       if (data.success) {
-        toast.success(data.message || 'Account created successfully! Please check your email for verification.');
+        toast.success('Account created successfully! Please check your email for verification.');
         // Redirect to OTP verification for signup
         const timestamp = Date.now();
         router.push(`/verifyOtp?email=${encodeURIComponent(formData.email)}&purpose=signup&timestamp=${timestamp}`);
       } else {
         const errorMessage = data.message || 'Signup failed. Please try again.';
-        toast.error(errorMessage, {
-          duration: 5000,
-          style: {
-            background: '#ef4444',
-            color: 'white',
-          },
-        });
-        // Error handled by toast - no console.error needed
+        toast.error(errorMessage);
       }
     } catch (error: any) {
       console.error('Signup error:', error);
@@ -78,16 +63,11 @@ export default function SignupPage() {
     setOauthLoading(provider);
     
     try {
-      // Simulate OAuth signup
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      toast.success(`${provider} account connected successfully!`);
-      // Show device verification modal for demo
-      setShowDeviceModal(true);
+      // Redirect to backend OAuth endpoint
+      window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/connect-tools/oauth/${provider}`;
     } catch (error) {
       console.error('OAuth signup error:', error);
       toast.error(`${provider} signup failed. Please try again.`);
-    } finally {
       setOauthLoading(null);
     }
   };
@@ -130,10 +110,10 @@ export default function SignupPage() {
             transition={{ delay: 0.3 }}
           >
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4">
-              {t.createAccount}
+              Start Your Payment Recovery Journey
             </h1>
             <p className="text-lg sm:text-xl opacity-90 max-w-md">
-              {t.joinCommunity}
+              Automate payment tracking and recovery with Stripe and Google Sheets integration
             </p>
           </motion.div>
           
@@ -146,36 +126,37 @@ export default function SignupPage() {
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
                 <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                  <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z" />
+                  <path fillRule="evenodd" d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z" clipRule="evenodd" />
                 </svg>
               </div>
               <div className="flex-1">
-                <h3 className="font-semibold text-sm sm:text-base">Professional Network</h3>
-                <p className="text-xs sm:text-sm opacity-75">Connect with professionals worldwide</p>
+                <h3 className="font-semibold text-sm sm:text-base">Stripe Integration</h3>
+                <p className="text-xs sm:text-sm opacity-75">Automatic payment tracking and invoicing</p>
               </div>
             </div>
             
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
                 <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M6.672 1.911a1 1 0 10-1.932.518l.259.966a1 1 0 001.932-.518l-.26-.966zM2.429 4.74a1 1 0 10-.517 1.932l.966.259a1 1 0 00.517-1.932l-.966-.26zm8.814-.569a1 1 0 00-1.415-1.414l-.707.707a1 1 0 101.415 1.415l.707-.708zm-7.071 7.072l.707-.707A1 1 0 003.465 9.12l-.708.707a1 1 0 001.415 1.415zm3.2-5.171a1 1 0 00-1.3 1.3l4 10a1 1 0 001.823.075l1.38-2.759 3.018 3.02a1 1 0 001.414-1.415l-3.019-3.02 2.76-1.379a1 1 0 00-.076-1.822l-10-4z" clipRule="evenodd" />
+                  <path fillRule="evenodd" d="M5 3a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V5a2 2 0 00-2-2H5zm9 4a1 1 0 10-2 0v6a1 1 0 102 0V7zm-3 2a1 1 0 10-2 0v4a1 1 0 102 0V9zm-3 3a1 1 0 10-2 0v1a1 1 0 102 0v-1z" clipRule="evenodd" />
                 </svg>
               </div>
               <div className="flex-1">
-                <h3 className="font-semibold text-sm sm:text-base">Smart Analytics</h3>
-                <p className="text-xs sm:text-sm opacity-75">AI-powered insights for your business</p>
+                <h3 className="font-semibold text-sm sm:text-base">Google Sheets Sync</h3>
+                <p className="text-xs sm:text-sm opacity-75">Real-time data synchronization</p>
               </div>
             </div>
             
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
                 <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M3 3a1 1 0 000 2v8a2 2 0 002 2h2.586l-1.293 1.293a1 1 0 101.414 1.414L10 15.414l2.293 2.293a1 1 0 001.414-1.414L12.414 15H15a2 2 0 002-2V5a1 1 0 100-2H3zm11.707 4.707a1 1 0 00-1.414-1.414L10 9.586 8.707 8.293a1 1 0 00-1.414 0l-2 2a1 1 0 101.414 1.414L8 10.414l1.293 1.293a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" />
                 </svg>
               </div>
               <div className="flex-1">
-                <h3 className="font-semibold text-sm sm:text-base">Growth Tools</h3>
-                <p className="text-xs sm:text-sm opacity-75">Scale your business with our platform</p>
+                <h3 className="font-semibold text-sm sm:text-base">Payment Reminders</h3>
+                <p className="text-xs sm:text-sm opacity-75">Automated overdue payment notifications</p>
               </div>
             </div>
           </motion.div>
@@ -211,14 +192,14 @@ export default function SignupPage() {
                 className="text-2xl sm:text-3xl font-bold mb-2"
                 style={{ color: 'var(--text-heading)' }}
               >
-                {t.createAccount}
+                Create Your Account
               </motion.h2>
               <motion.p
                 variants={itemVariants}
                 className="text-base sm:text-lg"
                 style={{ color: 'var(--text-secondary)' }}
               >
-                {t.joinCommunity}
+                Start automating your payment recovery today
               </motion.p>
             </div>
 
@@ -301,11 +282,6 @@ export default function SignupPage() {
       </motion.div>
 
       {/* Device Verification Modal */}
-      <DeviceVerificationModal
-        isOpen={showDeviceModal}
-        onClose={() => setShowDeviceModal(false)}
-        onVerificationSuccess={handleVerificationSuccess}
-      />
     </div>
   );
 }

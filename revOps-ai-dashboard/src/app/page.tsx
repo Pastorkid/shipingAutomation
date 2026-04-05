@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowRight, Globe, Users, TrendingUp, Shield, Zap, Settings } from 'lucide-react';
+import { ArrowRight, CreditCard, FileSpreadsheet, TrendingUp, Settings, Bell } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import LanguageSelector from './components/LanguageSelector';
@@ -22,84 +22,66 @@ export default function Home() {
 
   const features = [
     {
-      icon: TrendingUp,
-      title: 'Automated Revenue Operations',
-      description: 'AI-powered revenue tracking, lead follow-up, and targeted offers that increase your bottom line automatically',
+      icon: CreditCard,
+      title: 'Stripe Integration',
+      description: 'Connect your Stripe account to automatically track invoices, payments, and customer billing information',
       color: 'var(--primary)',
-      stats: '+47% Revenue Growth'
+      stats: 'Automated Payment Tracking'
     },
     {
-      icon: Zap,
-      title: 'Intelligent Workflows',
-      description: 'Cross-platform automation that connects Shopify, Stripe, QuickBooks and more without manual intervention',
+      icon: FileSpreadsheet,
+      title: 'Google Sheets Sync',
+      description: 'Sync payment data directly to Google Sheets for easy reporting, analysis, and financial management',
       color: 'var(--accent-green)',
-      stats: '12 Hours Saved/Week'
+      stats: 'Real-time Data Sync'
     },
     {
-      icon: Shield,
-      title: 'Business Intelligence',
-      description: 'Revenue forecasting, cost leak detection, and AI insights that help you make smarter business decisions',
+      icon: Bell,
+      title: 'Payment Recovery',
+      description: 'Automated reminders and follow-ups for overdue payments to improve cash flow and reduce bad debt',
       color: 'var(--accent-orange)',
-      stats: '99% Accuracy Rate'
+      stats: 'Reduce Overdue Payments by 60%'
     },
     {
-      icon: Globe,
-      title: 'Global Business Ready',
-      description: 'Multi-language, multi-currency support with timezone-aware operations for international expansion',
+      icon: TrendingUp,
+      title: 'Revenue Analytics',
+      description: 'Simple dashboard to track payment trends, revenue growth, and customer payment behavior',
       color: 'var(--primary)',
-      stats: '150+ Countries'
+      stats: 'Clear Financial Insights'
     }
   ];
 
   const pricingPlans = [
     {
       name: 'Starter',
-      price: '$99',
+      price: '$29',
       period: '/month',
-      description: 'Perfect for small businesses getting started with automation',
+      description: 'Perfect for small businesses getting started with payment recovery',
       features: [
-        'Up to 1,000 customers',
-        'Basic revenue tracking',
-        '5 automated workflows',
-        'Email support',
-        '3 integrations'
+        'Up to 500 customers',
+        'Stripe integration',
+        'Google Sheets sync',
+        'Automated payment reminders',
+        'Basic analytics'
       ],
       cta: 'Start Free Trial',
       popular: false
     },
     {
       name: 'Professional',
-      price: '$299',
+      price: '$79',
       period: '/month',
-      description: 'Ideal for growing businesses needing advanced automation',
+      description: 'Ideal for growing businesses needing advanced payment recovery',
       features: [
-        'Up to 10,000 customers',
-        'Advanced revenue analytics',
-        'Unlimited workflows',
+        'Up to 5,000 customers',
+        'Advanced payment analytics',
+        'Custom reminder templates',
         'Priority support',
-        'Unlimited integrations',
-        'Custom reporting',
-        'API access'
+        'CSV upload support',
+        'Payment trend analysis'
       ],
       cta: 'Start Free Trial',
       popular: true
-    },
-    {
-      name: 'Enterprise',
-      price: 'Custom',
-      period: '',
-      description: 'Tailored solutions for large organizations with complex needs',
-      features: [
-        'Unlimited customers',
-        'White-label solutions',
-        'Dedicated account manager',
-        '24/7 phone support',
-        'Custom AI training',
-        'On-premise deployment',
-        'SLA guarantee'
-      ],
-      cta: 'Contact Sales',
-      popular: false
     }
   ];
 
@@ -184,7 +166,7 @@ export default function Home() {
           className="text-4xl sm:text-5xl md:text-6xl font-bold mb-4 sm:mb-6 max-w-4xl"
           style={{ color: 'var(--text-heading)' }}
         >
-          {t.welcome}
+          Automated Payment Recovery for Small Business
         </motion.h1>
         
         <motion.p
@@ -192,7 +174,7 @@ export default function Home() {
           className="text-lg sm:text-xl md:text-2xl mb-6 sm:mb-8 max-w-2xl"
           style={{ color: 'var(--text-secondary)' }}
         >
-          {t.subtitle}
+          Connect Stripe and Google Sheets to automatically track payments, send reminders for overdue invoices, and improve your cash flow.
         </motion.p>
         
         <motion.div
@@ -238,10 +220,10 @@ export default function Home() {
           className="text-center mb-16"
         >
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4" style={{ color: 'var(--text-heading)' }}>
-            Powerful Features
+            V1 Payment Recovery Features
           </h2>
           <p className="text-base sm:text-lg max-w-2xl mx-auto" style={{ color: 'var(--text-secondary)' }}>
-            Everything you need to manage and grow your business
+            Essential tools to automate payment tracking and recovery for your business
           </p>
         </motion.div>
 

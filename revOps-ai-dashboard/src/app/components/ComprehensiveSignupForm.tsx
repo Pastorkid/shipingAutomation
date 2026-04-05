@@ -3,46 +3,12 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { 
-  Eye, EyeOff, Mail, Lock, User, Building, Phone, Globe, 
-  DollarSign, Target, MessageSquare, TrendingUp, Calendar,
-  ChevronRight, ChevronLeft, Check, AlertCircle
+  Eye, EyeOff, Mail, Lock, User, Building, Globe, 
+  DollarSign, Check, AlertCircle
 } from 'lucide-react';
 import { useTranslation } from '../hooks/useTranslation';
 
-// Business types from Prisma schema
-const BUSINESS_TYPES = [
-  { value: 'ECOMMERCE', label: 'E-commerce' },
-  { value: 'CONSULTING', label: 'Consulting' },
-  { value: 'SAAS', label: 'SaaS' },
-  { value: 'SERVICES', label: 'Services' },
-  { value: 'MANUFACTURING', label: 'Manufacturing' },
-  { value: 'RETAIL', label: 'Retail' },
-  { value: 'OTHER', label: 'Other' },
-];
-
-// Business sizes
-const BUSINESS_SIZES = [
-  { value: '1-10', label: '1-10 employees' },
-  { value: '11-50', label: '11-50 employees' },
-  { value: '51-200', label: '51-200 employees' },
-  { value: '200+', label: '200+ employees' },
-];
-
-// Revenue goals from Prisma schema
-const REVENUE_GOALS = [
-  { value: 'INCREASE_SALES', label: 'Increase Sales' },
-  { value: 'REDUCE_COSTS', label: 'Reduce Costs' },
-  { value: 'IMPROVE_MARKETING', label: 'Improve Marketing' },
-  { value: 'AUTOMATE_WORKFLOWS', label: 'Automate Workflows' },
-];
-
-// Communication channels
-const COMMUNICATION_CHANNELS = [
-  { value: 'EMAIL', label: 'Email', icon: Mail },
-  { value: 'SMS', label: 'SMS', icon: MessageSquare },
-  { value: 'WHATSAPP', label: 'WhatsApp', icon: MessageSquare },
-  { value: 'SLACK', label: 'Slack', icon: MessageSquare },
-];
+// V1 Simplified - Only essential constants needed
 
 // Common currencies
 const CURRENCIES = [
@@ -67,26 +33,14 @@ const TIMEZONES = [
 ];
 
 interface FormData {
-  // Basic info
+  // V1 Essential info only
   fullName: string;
   email: string;
   password: string;
   confirmPassword: string;
-  phoneNumber: string;
-  
-  // Business info
   businessName: string;
-  businessType: string;
-  businessSize: string;
-  website: string;
-  
-  // Preferences
   timezone: string;
   currency: string;
-  preferredLanguage: string;
-  revenueGoal: string;
-  communicationChannels: string[];
-  targetMonthlyRevenue: string;
 }
 
 interface ComprehensiveSignupFormProps {
@@ -106,56 +60,26 @@ export default function ComprehensiveSignupForm({ onSubmit, loading = false }: C
     email: '',
     password: '',
     confirmPassword: '',
-    phoneNumber: '',
     businessName: '',
-    businessType: '',
-    businessSize: '',
-    website: '',
     timezone: 'UTC',
     currency: 'USD',
-    preferredLanguage: 'en',
-    revenueGoal: '',
-    communicationChannels: ['EMAIL'],
-    targetMonthlyRevenue: '',
   });
 
-  const totalSteps = 3;
+  const totalSteps = 1; // V1 Simplified - single step form
   const progress = (currentStep / totalSteps) * 100;
 
   const validateStep = (step: number): boolean => {
     const newErrors: Record<string, string> = {};
 
-    if (step === 1) {
-      // Basic info validation
-      if (!formData.fullName.trim()) newErrors.fullName = t.required;
-      if (!formData.email.trim()) newErrors.email = t.required;
-      else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) newErrors.email = t.validEmail;
-      if (!formData.password) newErrors.password = t.required;
-      else if (formData.password.length < 8) newErrors.password = t.passwordMinLength;
-      if (!formData.confirmPassword) newErrors.confirmPassword = t.required;
-      else if (formData.password !== formData.confirmPassword) newErrors.confirmPassword = t.passwordsNotMatch;
-      if (formData.phoneNumber && !/^\+?[\d\s\-\(\)]+$/.test(formData.phoneNumber)) {
-        newErrors.phoneNumber = t.validPhone;
-      }
-    }
-
-    if (step === 2) {
-      // Business info validation
-      if (!formData.businessName.trim()) newErrors.businessName = t.required;
-      if (!formData.businessType) newErrors.businessType = t.required;
-      if (!formData.businessSize) newErrors.businessSize = t.required;
-      if (formData.website && !/^https?:\/\/.+/.test(formData.website)) {
-        newErrors.website = 'Please enter a valid website URL';
-      }
-    }
-
-    if (step === 3) {
-      // Preferences validation
-      if (!formData.revenueGoal) newErrors.revenueGoal = t.required;
-      if (formData.targetMonthlyRevenue && isNaN(Number(formData.targetMonthlyRevenue))) {
-        newErrors.targetMonthlyRevenue = 'Please enter a valid number';
-      }
-    }
+    // V1 Simplified validation - single step
+    if (!formData.fullName.trim()) newErrors.fullName = 'Full name is required';
+    if (!formData.email.trim()) newErrors.email = 'Email is required';
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) newErrors.email = 'Please enter a valid email';
+    if (!formData.password) newErrors.password = 'Password is required';
+    else if (formData.password.length < 8) newErrors.password = 'Password must be at least 8 characters';
+    if (!formData.confirmPassword) newErrors.confirmPassword = 'Please confirm your password';
+    else if (formData.password !== formData.confirmPassword) newErrors.confirmPassword = 'Passwords do not match';
+    if (!formData.businessName.trim()) newErrors.businessName = 'Business name is required';
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -178,7 +102,7 @@ export default function ComprehensiveSignupForm({ onSubmit, loading = false }: C
     }
   };
 
-  const handleInputChange = (field: keyof FormData, value: string | string[]) => {
+  const handleInputChange = (field: keyof FormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     // Clear error when user starts typing
     if (errors[field]) {
@@ -186,539 +110,228 @@ export default function ComprehensiveSignupForm({ onSubmit, loading = false }: C
     }
   };
 
-  const toggleCommunicationChannel = (channel: string) => {
-    setFormData(prev => ({
-      ...prev,
-      communicationChannels: prev.communicationChannels.includes(channel)
-        ? prev.communicationChannels.filter(c => c !== channel)
-        : [...prev.communicationChannels, channel]
-    }));
-  };
+  // V1 Simplified - No communication channels toggle needed
 
   const renderStep = () => {
-    switch (currentStep) {
-      case 1:
-        return (
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            className="space-y-6"
-          >
-            <div className="text-center mb-8">
-              <h2 className="text-2xl font-bold mb-2" style={{ color: 'var(--text-heading)' }}>
-                Let's get started
-              </h2>
-              <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-                First, tell us about yourself
-              </p>
-            </div>
+    return (
+      <motion.div
+        initial={{ opacity: 0, x: 20 }}
+        animate={{ opacity: 1, x: 0 }}
+        className="space-y-6"
+      >
+        <div className="text-center mb-8">
+          <h2 className="text-2xl font-bold mb-2" style={{ color: 'var(--text-heading)' }}>
+            Create Your Account
+          </h2>
+          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+            Start automating your payment recovery today
+          </p>
+        </div>
+        {/* Full Name */}
+        <div>
+          <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-heading)' }}>
+            Full Name <span className="text-red-500">*</span>
+          </label>
+          <div className="relative">
+            <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5" style={{ color: 'var(--text-muted)' }} />
+            <input
+              type="text"
+              value={formData.fullName}
+              onChange={(e) => handleInputChange('fullName', e.target.value)}
+              className={`w-full pl-10 pr-4 py-3 rounded-lg border transition-colors focus:outline-none focus:ring-2`}
+              style={{ 
+                backgroundColor: 'var(--background-card)', 
+                borderColor: errors.fullName ? '#ef4444' : 'var(--input-border)',
+                color: 'var(--text-primary)'
+              }}
+              placeholder="John Doe"
+            />
+          </div>
+          {errors.fullName && (
+            <p className="mt-1 text-sm text-red-500 flex items-center gap-1">
+              <AlertCircle className="w-4 h-4" />
+              {errors.fullName}
+            </p>
+          )}
+        </div>
 
-            {/* Full Name */}
-            <div>
-              <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-heading)' }}>
-                {t.fullName} <span className="text-red-500">*</span>
-              </label>
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5" style={{ color: 'var(--text-muted)' }} />
-                <input
-                  type="text"
-                  value={formData.fullName}
-                  onChange={(e) => handleInputChange('fullName', e.target.value)}
-                  className={`w-full pl-10 pr-4 py-3 rounded-lg border transition-colors ${
-                    errors.fullName 
-                      ? 'border-red-500 focus:ring-red-500' 
-                      : 'border-gray-300 focus:ring-blue-500'
-                  } focus:outline-none focus:ring-2`}
-                  style={{ 
-                    backgroundColor: 'var(--background-card)', 
-                    borderColor: errors.fullName ? '#ef4444' : 'var(--input-border)',
-                    color: 'var(--text-primary)'
-                  }}
-                  placeholder="John Doe"
-                />
-              </div>
-              {errors.fullName && (
-                <p className="mt-1 text-sm text-red-500 flex items-center gap-1">
-                  <AlertCircle className="w-4 h-4" />
-                  {errors.fullName}
-                </p>
-              )}
-            </div>
+        {/* Email */}
+        <div>
+          <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-heading)' }}>
+            Email <span className="text-red-500">*</span>
+          </label>
+          <div className="relative">
+            <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5" style={{ color: 'var(--text-muted)' }} />
+            <input
+              type="email"
+              value={formData.email}
+              onChange={(e) => handleInputChange('email', e.target.value)}
+              className={`w-full pl-10 pr-4 py-3 rounded-lg border transition-colors focus:outline-none focus:ring-2`}
+              style={{ 
+                backgroundColor: 'var(--background-card)', 
+                borderColor: errors.email ? '#ef4444' : 'var(--input-border)',
+                color: 'var(--text-primary)'
+              }}
+              placeholder="john@example.com"
+            />
+          </div>
+          {errors.email && (
+            <p className="mt-1 text-sm text-red-500 flex items-center gap-1">
+              <AlertCircle className="w-4 h-4" />
+              {errors.email}
+            </p>
+          )}
+        </div>
 
-            {/* Email */}
-            <div>
-              <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-heading)' }}>
-                {t.email} <span className="text-red-500">*</span>
-              </label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5" style={{ color: 'var(--text-muted)' }} />
-                <input
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => handleInputChange('email', e.target.value)}
-                  className={`w-full pl-10 pr-4 py-3 rounded-lg border transition-colors ${
-                    errors.email 
-                      ? 'border-red-500 focus:ring-red-500' 
-                      : 'border-gray-300 focus:ring-blue-500'
-                  } focus:outline-none focus:ring-2`}
-                  style={{ 
-                    backgroundColor: 'var(--background-card)', 
-                    borderColor: errors.email ? '#ef4444' : 'var(--input-border)',
-                    color: 'var(--text-primary)'
-                  }}
-                  placeholder="john@example.com"
-                />
-              </div>
-              {errors.email && (
-                <p className="mt-1 text-sm text-red-500 flex items-center gap-1">
-                  <AlertCircle className="w-4 h-4" />
-                  {errors.email}
-                </p>
-              )}
-            </div>
+        {/* Password */}
+        <div>
+          <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-heading)' }}>
+            Password <span className="text-red-500">*</span>
+          </label>
+          <div className="relative">
+            <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5" style={{ color: 'var(--text-muted)' }} />
+            <input
+              type={showPassword ? 'text' : 'password'}
+              value={formData.password}
+              onChange={(e) => handleInputChange('password', e.target.value)}
+              className={`w-full pl-10 pr-12 py-3 rounded-lg border transition-colors focus:outline-none focus:ring-2`}
+              style={{ 
+                backgroundColor: 'var(--background-card)', 
+                borderColor: errors.password ? '#ef4444' : 'var(--input-border)',
+                color: 'var(--text-primary)'
+              }}
+              placeholder="••••••••"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 transform -translate-y-1/2"
+              style={{ color: 'var(--text-muted)' }}
+            >
+              {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+            </button>
+          </div>
+          {errors.password && (
+            <p className="mt-1 text-sm text-red-500 flex items-center gap-1">
+              <AlertCircle className="w-4 h-4" />
+              {errors.password}
+            </p>
+          )}
+        </div>
 
-            {/* Phone Number */}
-            <div>
-              <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-heading)' }}>
-                {t.phoneNumber} <span className="text-xs text-gray-500">({t.optional})</span>
-              </label>
-              <div className="relative">
-                <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5" style={{ color: 'var(--text-muted)' }} />
-                <input
-                  type="tel"
-                  value={formData.phoneNumber}
-                  onChange={(e) => handleInputChange('phoneNumber', e.target.value)}
-                  className={`w-full pl-10 pr-4 py-3 rounded-lg border transition-colors ${
-                    errors.phoneNumber 
-                      ? 'border-red-500 focus:ring-red-500' 
-                      : 'border-gray-300 focus:ring-blue-500'
-                  } focus:outline-none focus:ring-2`}
-                  style={{ 
-                    backgroundColor: 'var(--background-card)', 
-                    borderColor: errors.phoneNumber ? '#ef4444' : 'var(--input-border)',
-                    color: 'var(--text-primary)'
-                  }}
-                  placeholder="+1 (555) 123-4567"
-                />
-              </div>
-              {errors.phoneNumber && (
-                <p className="mt-1 text-sm text-red-500 flex items-center gap-1">
-                  <AlertCircle className="w-4 h-4" />
-                  {errors.phoneNumber}
-                </p>
-              )}
-            </div>
+        {/* Confirm Password */}
+        <div>
+          <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-heading)' }}>
+            Confirm Password <span className="text-red-500">*</span>
+          </label>
+          <div className="relative">
+            <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5" style={{ color: 'var(--text-muted)' }} />
+            <input
+              type={showConfirmPassword ? 'text' : 'password'}
+              value={formData.confirmPassword}
+              onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
+              className={`w-full pl-10 pr-12 py-3 rounded-lg border transition-colors focus:outline-none focus:ring-2`}
+              style={{ 
+                backgroundColor: 'var(--background-card)', 
+                borderColor: errors.confirmPassword ? '#ef4444' : 'var(--input-border)',
+                color: 'var(--text-primary)'
+              }}
+              placeholder="••••••••"
+            />
+            <button
+              type="button"
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              className="absolute right-3 top-1/2 transform -translate-y-1/2"
+              style={{ color: 'var(--text-muted)' }}
+            >
+              {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+            </button>
+          </div>
+          {errors.confirmPassword && (
+            <p className="mt-1 text-sm text-red-500 flex items-center gap-1">
+              <AlertCircle className="w-4 h-4" />
+              {errors.confirmPassword}
+            </p>
+          )}
+        </div>
 
-            {/* Password */}
-            <div>
-              <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-heading)' }}>
-                {t.password} <span className="text-red-500">*</span>
-              </label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5" style={{ color: 'var(--text-muted)' }} />
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  value={formData.password}
-                  onChange={(e) => handleInputChange('password', e.target.value)}
-                  className={`w-full pl-10 pr-12 py-3 rounded-lg border transition-colors ${
-                    errors.password 
-                      ? 'border-red-500 focus:ring-red-500' 
-                      : 'border-gray-300 focus:ring-blue-500'
-                  } focus:outline-none focus:ring-2`}
-                  style={{ 
-                    backgroundColor: 'var(--background-card)', 
-                    borderColor: errors.password ? '#ef4444' : 'var(--input-border)',
-                    color: 'var(--text-primary)'
-                  }}
-                  placeholder="••••••••"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2"
-                  style={{ color: 'var(--text-muted)' }}
-                >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                </button>
-              </div>
-              {errors.password && (
-                <p className="mt-1 text-sm text-red-500 flex items-center gap-1">
-                  <AlertCircle className="w-4 h-4" />
-                  {errors.password}
-                </p>
-              )}
-            </div>
+        {/* Business Name */}
+        <div>
+          <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-heading)' }}>
+            Business Name <span className="text-red-500">*</span>
+          </label>
+          <div className="relative">
+            <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5" style={{ color: 'var(--text-muted)' }} />
+            <input
+              type="text"
+              value={formData.businessName}
+              onChange={(e) => handleInputChange('businessName', e.target.value)}
+              className={`w-full pl-10 pr-4 py-3 rounded-lg border transition-colors focus:outline-none focus:ring-2`}
+              style={{ 
+                backgroundColor: 'var(--background-card)', 
+                borderColor: errors.businessName ? '#ef4444' : 'var(--input-border)',
+                color: 'var(--text-primary)'
+              }}
+              placeholder="Acme Inc."
+            />
+          </div>
+          {errors.businessName && (
+            <p className="mt-1 text-sm text-red-500 flex items-center gap-1">
+              <AlertCircle className="w-4 h-4" />
+              {errors.businessName}
+            </p>
+          )}
+        </div>
 
-            {/* Confirm Password */}
-            <div>
-              <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-heading)' }}>
-                {t.confirmPassword} <span className="text-red-500">*</span>
-              </label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5" style={{ color: 'var(--text-muted)' }} />
-                <input
-                  type={showConfirmPassword ? 'text' : 'password'}
-                  value={formData.confirmPassword}
-                  onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
-                  className={`w-full pl-10 pr-12 py-3 rounded-lg border transition-colors ${
-                    errors.confirmPassword 
-                      ? 'border-red-500 focus:ring-red-500' 
-                      : 'border-gray-300 focus:ring-blue-500'
-                  } focus:outline-none focus:ring-2`}
-                  style={{ 
-                    backgroundColor: 'var(--background-card)', 
-                    borderColor: errors.confirmPassword ? '#ef4444' : 'var(--input-border)',
-                    color: 'var(--text-primary)'
-                  }}
-                  placeholder="••••••••"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2"
-                  style={{ color: 'var(--text-muted)' }}
-                >
-                  {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                </button>
-              </div>
-              {errors.confirmPassword && (
-                <p className="mt-1 text-sm text-red-500 flex items-center gap-1">
-                  <AlertCircle className="w-4 h-4" />
-                  {errors.confirmPassword}
-                </p>
-              )}
-            </div>
-          </motion.div>
-        );
+        {/* Timezone */}
+        <div>
+          <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-heading)' }}>
+            Timezone <span className="text-red-500">*</span>
+          </label>
+          <div className="relative">
+            <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5" style={{ color: 'var(--text-muted)' }} />
+            <select
+              value={formData.timezone}
+              onChange={(e) => handleInputChange('timezone', e.target.value)}
+              className={`w-full pl-10 pr-4 py-3 rounded-lg border transition-colors appearance-none focus:outline-none focus:ring-2`}
+              style={{ 
+                backgroundColor: 'var(--background-card)', 
+                borderColor: 'var(--input-border)',
+                color: 'var(--text-primary)'
+              }}
+            >
+              {TIMEZONES.map(tz => (
+                <option key={tz.value} value={tz.value}>{tz.label}</option>
+              ))}
+            </select>
+          </div>
+        </div>
 
-      case 2:
-        return (
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            className="space-y-6"
-          >
-            <div className="text-center mb-8">
-              <h2 className="text-2xl font-bold mb-2" style={{ color: 'var(--text-heading)' }}>
-                Tell us about your business
-              </h2>
-              <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-                This helps us personalize your experience
-              </p>
-            </div>
-
-            {/* Business Name */}
-            <div>
-              <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-heading)' }}>
-                {t.businessName} <span className="text-red-500">*</span>
-              </label>
-              <div className="relative">
-                <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5" style={{ color: 'var(--text-muted)' }} />
-                <input
-                  type="text"
-                  value={formData.businessName}
-                  onChange={(e) => handleInputChange('businessName', e.target.value)}
-                  className={`w-full pl-10 pr-4 py-3 rounded-lg border transition-colors ${
-                    errors.businessName 
-                      ? 'border-red-500 focus:ring-red-500' 
-                      : 'border-gray-300 focus:ring-blue-500'
-                  } focus:outline-none focus:ring-2`}
-                  style={{ 
-                    backgroundColor: 'var(--background-card)', 
-                    borderColor: errors.businessName ? '#ef4444' : 'var(--input-border)',
-                    color: 'var(--text-primary)'
-                  }}
-                  placeholder="Acme Corporation"
-                />
-              </div>
-              {errors.businessName && (
-                <p className="mt-1 text-sm text-red-500 flex items-center gap-1">
-                  <AlertCircle className="w-4 h-4" />
-                  {errors.businessName}
-                </p>
-              )}
-            </div>
-
-            {/* Business Type */}
-            <div>
-              <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-heading)' }}>
-                {t.businessType} <span className="text-red-500">*</span>
-              </label>
-              <select
-                value={formData.businessType}
-                onChange={(e) => handleInputChange('businessType', e.target.value)}
-                className={`w-full px-4 py-3 rounded-lg border transition-colors ${
-                  errors.businessType 
-                    ? 'border-red-500 focus:ring-red-500' 
-                    : 'border-gray-300 focus:ring-blue-500'
-                } focus:outline-none focus:ring-2`}
-                style={{ 
-                  backgroundColor: 'var(--background-card)', 
-                  borderColor: errors.businessType ? '#ef4444' : 'var(--input-border)',
-                  color: 'var(--text-primary)'
-                }}
-              >
-                <option value="">Select business type</option>
-                {BUSINESS_TYPES.map(type => (
-                  <option key={type.value} value={type.value}>
-                    {type.label}
-                  </option>
-                ))}
-              </select>
-              {errors.businessType && (
-                <p className="mt-1 text-sm text-red-500 flex items-center gap-1">
-                  <AlertCircle className="w-4 h-4" />
-                  {errors.businessType}
-                </p>
-              )}
-            </div>
-
-            {/* Business Size */}
-            <div>
-              <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-heading)' }}>
-                {t.businessSize} <span className="text-red-500">*</span>
-              </label>
-              <select
-                value={formData.businessSize}
-                onChange={(e) => handleInputChange('businessSize', e.target.value)}
-                className={`w-full px-4 py-3 rounded-lg border transition-colors ${
-                  errors.businessSize 
-                    ? 'border-red-500 focus:ring-red-500' 
-                    : 'border-gray-300 focus:ring-blue-500'
-                } focus:outline-none focus:ring-2`}
-                style={{ 
-                  backgroundColor: 'var(--background-card)', 
-                  borderColor: errors.businessSize ? '#ef4444' : 'var(--input-border)',
-                  color: 'var(--text-primary)'
-                }}
-              >
-                <option value="">Select company size</option>
-                {BUSINESS_SIZES.map(size => (
-                  <option key={size.value} value={size.value}>
-                    {size.label}
-                  </option>
-                ))}
-              </select>
-              {errors.businessSize && (
-                <p className="mt-1 text-sm text-red-500 flex items-center gap-1">
-                  <AlertCircle className="w-4 h-4" />
-                  {errors.businessSize}
-                </p>
-              )}
-            </div>
-
-            {/* Website */}
-            <div>
-              <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-heading)' }}>
-                {t.website} <span className="text-xs text-gray-500">({t.optional})</span>
-              </label>
-              <div className="relative">
-                <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5" style={{ color: 'var(--text-muted)' }} />
-                <input
-                  type="url"
-                  value={formData.website}
-                  onChange={(e) => handleInputChange('website', e.target.value)}
-                  className={`w-full pl-10 pr-4 py-3 rounded-lg border transition-colors ${
-                    errors.website 
-                      ? 'border-red-500 focus:ring-red-500' 
-                      : 'border-gray-300 focus:ring-blue-500'
-                  } focus:outline-none focus:ring-2`}
-                  style={{ 
-                    backgroundColor: 'var(--background-card)', 
-                    borderColor: errors.website ? '#ef4444' : 'var(--input-border)',
-                    color: 'var(--text-primary)'
-                  }}
-                  placeholder="https://www.example.com"
-                />
-              </div>
-              {errors.website && (
-                <p className="mt-1 text-sm text-red-500 flex items-center gap-1">
-                  <AlertCircle className="w-4 h-4" />
-                  {errors.website}
-                </p>
-              )}
-            </div>
-          </motion.div>
-        );
-
-      case 3:
-        return (
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            className="space-y-6"
-          >
-            <div className="text-center mb-8">
-              <h2 className="text-2xl font-bold mb-2" style={{ color: 'var(--text-heading)' }}>
-                Almost there!
-              </h2>
-              <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-                Set your preferences to personalize RevOps AI
-              </p>
-            </div>
-
-            {/* Revenue Goal */}
-            <div>
-              <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-heading)' }}>
-                {t.revenueGoal} <span className="text-red-500">*</span>
-              </label>
-              <div className="relative">
-                <Target className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5" style={{ color: 'var(--text-muted)' }} />
-                <select
-                  value={formData.revenueGoal}
-                  onChange={(e) => handleInputChange('revenueGoal', e.target.value)}
-                  className={`w-full pl-10 pr-4 py-3 rounded-lg border transition-colors ${
-                    errors.revenueGoal 
-                      ? 'border-red-500 focus:ring-red-500' 
-                      : 'border-gray-300 focus:ring-blue-500'
-                  } focus:outline-none focus:ring-2 appearance-none`}
-                  style={{ 
-                    backgroundColor: 'var(--background-card)', 
-                    borderColor: errors.revenueGoal ? '#ef4444' : 'var(--input-border)',
-                    color: 'var(--text-primary)'
-                  }}
-                >
-                  <option value="">Select your primary goal</option>
-                  {REVENUE_GOALS.map(goal => (
-                    <option key={goal.value} value={goal.value}>
-                      {goal.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              {errors.revenueGoal && (
-                <p className="mt-1 text-sm text-red-500 flex items-center gap-1">
-                  <AlertCircle className="w-4 h-4" />
-                  {errors.revenueGoal}
-                </p>
-              )}
-            </div>
-
-            {/* Target Monthly Revenue */}
-            <div>
-              <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-heading)' }}>
-                {t.targetMonthlyRevenue} <span className="text-xs text-gray-500">({t.optional})</span>
-              </label>
-              <div className="relative">
-                <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5" style={{ color: 'var(--text-muted)' }} />
-                <input
-                  type="text"
-                  value={formData.targetMonthlyRevenue}
-                  onChange={(e) => handleInputChange('targetMonthlyRevenue', e.target.value)}
-                  className={`w-full pl-10 pr-4 py-3 rounded-lg border transition-colors ${
-                    errors.targetMonthlyRevenue 
-                      ? 'border-red-500 focus:ring-red-500' 
-                      : 'border-gray-300 focus:ring-blue-500'
-                  } focus:outline-none focus:ring-2`}
-                  style={{ 
-                    backgroundColor: 'var(--background-card)', 
-                    borderColor: errors.targetMonthlyRevenue ? '#ef4444' : 'var(--input-border)',
-                    color: 'var(--text-primary)'
-                  }}
-                  placeholder="50000"
-                />
-              </div>
-              {errors.targetMonthlyRevenue && (
-                <p className="mt-1 text-sm text-red-500 flex items-center gap-1">
-                  <AlertCircle className="w-4 h-4" />
-                  {errors.targetMonthlyRevenue}
-                </p>
-              )}
-            </div>
-
-            {/* Currency */}
-            <div>
-              <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-heading)' }}>
-                {t.currency}
-              </label>
-              <select
-                value={formData.currency}
-                onChange={(e) => handleInputChange('currency', e.target.value)}
-                className="w-full px-4 py-3 rounded-lg border transition-colors focus:outline-none focus:ring-2"
-                style={{ 
-                  backgroundColor: 'var(--background-card)', 
-                  borderColor: 'var(--input-border)',
-                  color: 'var(--text-primary)'
-                }}
-              >
-                {CURRENCIES.map(currency => (
-                  <option key={currency.value} value={currency.value}>
-                    {currency.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Timezone */}
-            <div>
-              <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-heading)' }}>
-                {t.timezone}
-              </label>
-              <div className="relative">
-                <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5" style={{ color: 'var(--text-muted)' }} />
-                <select
-                  value={formData.timezone}
-                  onChange={(e) => handleInputChange('timezone', e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 rounded-lg border transition-colors focus:outline-none focus:ring-2 appearance-none"
-                  style={{ 
-                    backgroundColor: 'var(--background-card)', 
-                    borderColor: 'var(--input-border)',
-                    color: 'var(--text-primary)'
-                  }}
-                >
-                  {TIMEZONES.map(tz => (
-                    <option key={tz.value} value={tz.value}>
-                      {tz.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            {/* Communication Channels */}
-            <div>
-              <label className="block text-sm font-medium mb-3" style={{ color: 'var(--text-heading)' }}>
-                {t.communicationChannels}
-              </label>
-              <div className="grid grid-cols-2 gap-3">
-                {COMMUNICATION_CHANNELS.map(channel => {
-                  const Icon = channel.icon;
-                  const isSelected = formData.communicationChannels.includes(channel.value);
-                  
-                  return (
-                    <button
-                      key={channel.value}
-                      type="button"
-                      onClick={() => toggleCommunicationChannel(channel.value)}
-                      className={`flex items-center gap-3 p-3 rounded-lg border-2 transition-all ${
-                        isSelected
-                          ? 'border-blue-500 bg-blue-50'
-                          : 'border-gray-200 hover:border-gray-300'
-                      }`}
-                      style={{
-                        backgroundColor: isSelected ? 'var(--accent-blue)' : 'var(--background-card)',
-                        borderColor: isSelected ? 'var(--primary)' : 'var(--input-border)'
-                      }}
-                    >
-                      <Icon className="w-5 h-5" style={{ color: isSelected ? 'var(--primary)' : 'var(--text-muted)' }} />
-                      <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-                        {channel.label}
-                      </span>
-                      {isSelected && <Check className="w-4 h-4 ml-auto" style={{ color: 'var(--primary)' }} />}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          </motion.div>
-        );
-
-      default:
-        return null;
-    }
+        {/* Currency */}
+        <div>
+          <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-heading)' }}>
+            Currency <span className="text-red-500">*</span>
+          </label>
+          <div className="relative">
+            <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5" style={{ color: 'var(--text-muted)' }} />
+            <select
+              value={formData.currency}
+              onChange={(e) => handleInputChange('currency', e.target.value)}
+              className={`w-full pl-10 pr-4 py-3 rounded-lg border transition-colors appearance-none focus:outline-none focus:ring-2`}
+              style={{ 
+                backgroundColor: 'var(--background-card)', 
+                borderColor: 'var(--input-border)',
+                color: 'var(--text-primary)'
+              }}
+            >
+              {CURRENCIES.map(currency => (
+                <option key={currency.value} value={currency.value}>{currency.label}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+      </motion.div>
+    );
   };
 
   return (
@@ -749,62 +362,29 @@ export default function ComprehensiveSignupForm({ onSubmit, loading = false }: C
           {renderStep()}
         </div>
 
-        {/* Navigation Buttons */}
-        <div className="flex items-center justify-between pt-6 border-t" style={{ borderColor: 'var(--input-border)' }}>
+        {/* Submit Button - V1 Simplified */}
+        <div className="flex justify-center pt-6">
           <button
-            type="button"
-            onClick={handlePrevious}
-            disabled={currentStep === 1}
-            className={`flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-colors ${
-              currentStep === 1
-                ? 'opacity-50 cursor-not-allowed'
-                : 'hover:bg-gray-100'
-            }`}
+            type="submit"
+            disabled={loading}
+            className="flex items-center justify-center gap-2 px-8 py-3 rounded-lg font-medium transition-colors shadow-sm w-full max-w-xs"
             style={{ 
-              color: 'var(--text-secondary)',
-              backgroundColor: currentStep === 1 ? 'transparent' : 'var(--background-secondary)'
+              backgroundColor: loading ? 'var(--text-muted)' : 'var(--primary)', 
+              color: 'white'
             }}
           >
-            <ChevronLeft className="w-5 h-5" />
-            Previous
+            {loading ? (
+              <>
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                Creating Account...
+              </>
+            ) : (
+              <>
+                <Check className="w-5 h-5" />
+                Create Account
+              </>
+            )}
           </button>
-
-          {currentStep < totalSteps ? (
-            <button
-              type="button"
-              onClick={handleNext}
-              className="flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-colors shadow-sm"
-              style={{ 
-                backgroundColor: 'var(--primary)', 
-                color: 'white'
-              }}
-            >
-              Next
-              <ChevronRight className="w-5 h-5" />
-            </button>
-          ) : (
-            <button
-              type="submit"
-              disabled={loading}
-              className="flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-colors shadow-sm"
-              style={{ 
-                backgroundColor: loading ? 'var(--text-muted)' : 'var(--primary)', 
-                color: 'white'
-              }}
-            >
-              {loading ? (
-                <>
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  Creating Account...
-                </>
-              ) : (
-                <>
-                  <Check className="w-5 h-5" />
-                  Create Account
-                </>
-              )}
-            </button>
-          )}
         </div>
       </form>
     </div>

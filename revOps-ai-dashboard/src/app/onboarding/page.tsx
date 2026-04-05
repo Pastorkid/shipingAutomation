@@ -1,628 +1,239 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useTranslation } from '../hooks/useTranslation';
-import { ArrowLeft, ArrowRight, Building, DollarSign, Link, CheckCircle, Globe, Users, Target, Zap } from 'lucide-react';
-import LanguageSelector from '../components/LanguageSelector';
+import { ArrowLeft, ArrowRight, CreditCard, FileSpreadsheet, Upload, CheckCircle, DollarSign } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { useOnBoardingStore } from '../store/auth/onBoarding/onBoardingStore';
-import SetupMethodSelector from '../components/SetupMethodSelector';
-import IntegrationCard from '../components/IntegrationCard';
-import DataUploadDropzone from '../components/DataUploadDropzone';
-import BusinessDetectionSummary from '../components/BusinessDetectionSummary';
-import IntelligentAutomationRecommender from '../components/IntelligentAutomationRecommender';
-import AIBusinessAnalysis from '../components/AIBusinessAnalysis';
-import AdvancedBusinessHealthScore from '../components/AdvancedBusinessHealthScore';
-import EnhancedSetupComplete from '../components/EnhancedSetupComplete';
-import { AutomationTemplateCard } from '../components/AutomationTemplateCard';
-import { automationTemplates } from '../components/AutomationTemplateCard';
-import BusinessHealthScore from '../components/BusinessHealthScore';
-import ConnectedToolsFlow from '../components/integration/ConnectedToolsFlow';
-import OnboardingDataCollector from '../components/OnboardingDataCollector';
-import ManualSetupFlow from '../components/ManualSetupFlow';
+import { useConnectedToolsStore } from '../store/connectedTools/connectedToolsStore';
 
-// Advanced onboarding state
-interface OnboardingState {
-  setupMethod: 'connect' | 'upload' | 'manual' | null;
-  connectedIntegrations: string[];
-  uploadedFiles: File[];
-  businessData: any;
-  configurations: {
-    revenueTracking: boolean;
-    leadFollowUp: boolean;
-    costMonitoring: boolean;
-    marketingAutomation: boolean;
-  };
-  activeAutomations: string[];
-  businessHealthScore: number;
+// V1 Components - Focus on payment tracking only
+import StripeConnection from '../components/v1/StripeConnection';
+import GoogleSheetsConnection from '../components/v1/GoogleSheetsConnection';
+import ManualDataUpload from '../components/v1/ManualDataUpload';
+import V1SetupComplete from '../components/v1/V1SetupComplete';
+
+// V1 Onboarding State - Simple and focused
+interface V1OnboardingState {
+  selectedMethod: 'stripe' | 'google-sheets' | 'manual' | null;
+  stripeConnected: boolean;
+  googleSheetsConnected: boolean;
+  manualDataUploaded: boolean;
+  setupComplete: boolean;
 }
 
-export default function OnboardingPage() {
-  const { t } = useTranslation();
-  const { updateOnboardingStep, completeOnboarding } = useOnBoardingStore();
+export default function V1OnboardingPage() {
+  const { completeOnboarding } = useOnBoardingStore();
+  const { tools, refreshTools } = useConnectedToolsStore();
   
-  // Onboarding steps data
-  const steps = [
-    { id: 1, title: t.step1Title, icon: Target },
-    { id: 2, title: t.step2Title, icon: Link },
-    { id: 3, title: t.step3Title, icon: Zap },
-    { id: 4, title: t.step4Title, icon: DollarSign },
-    { id: 5, title: t.step5Title, icon: CheckCircle },
-    { id: 6, title: t.step6Title, icon: Globe },
-  ];
-
-  // Industry options
-  const industries = [
-    { value: 'technology', label: t.technology },
-    { value: 'ecommerce', label: t.ecommerce },
-    { value: 'consulting', label: t.consulting },
-    { value: 'saas', label: t.saas },
-    { value: 'manufacturing', label: t.manufacturing },
-    { value: 'healthcare', label: t.healthcare },
-    { value: 'financial', label: t.financialServices },
-    { value: 'other', label: t.other },
-  ];
-
-  // Currency options
-  const currencies = [
-    { value: 'USD', label: t.usd, symbol: '$' },
-    { value: 'EUR', label: t.eur, symbol: '€' },
-    { value: 'GBP', label: t.gbp, symbol: '£' },
-    { value: 'JPY', label: t.jpy, symbol: '¥' },
-    { value: 'CNY', label: t.cny, symbol: '¥' },
-  ];
-
-  // Timezone options
-  const timezones = [
-    { value: 'America/New_York', label: t.easternTime },
-    { value: 'America/Chicago', label: t.centralTime },
-    { value: 'America/Denver', label: t.mountainTime },
-    { value: 'America/Los_Angeles', label: t.pacificTime },
-    { value: 'Europe/London', label: t.londonGmt },
-    { value: 'Europe/Paris', label: t.parisCet },
-  ];
-  const [currentStep, setCurrentStep] = useState(1);
-  const [onboardingState, setOnboardingState] = useState<OnboardingState>({
-    setupMethod: null,
-    connectedIntegrations: [],
-    uploadedFiles: [],
-    businessData: null,
-    configurations: {
-      revenueTracking: false,
-      leadFollowUp: false,
-      costMonitoring: false,
-      marketingAutomation: false,
-    },
-    activeAutomations: [],
-    businessHealthScore: 0,
+  const [currentStep, setCurrentStep] = useState(0);
+  const [onboardingState, setOnboardingState] = useState<V1OnboardingState>({
+    selectedMethod: null,
+    stripeConnected: false,
+    googleSheetsConnected: false,
+    manualDataUploaded: false,
+    setupComplete: false,
   });
 
-  const [activeAutomations, setActiveAutomations] = useState<string[]>([]);
-
-  // Mock integrations data
-  const integrations = [
+  // V1 Steps - Simple and focused
+  const steps = [
     {
-      id: 'stripe',
-      name: 'Stripe',
-      icon: '💳',
-      category: 'Payment Processing',
-      description: 'Process payments and manage subscriptions',
-      status: 'disconnected' as const
+      id: 'welcome',
+      title: 'Choose Your Payment Tracking Method',
+      description: 'Select how you want to track unpaid payments and invoices',
     },
     {
-      id: 'shopify',
-      name: 'Shopify',
-      icon: '🛒',
-      category: 'E-commerce',
-      description: 'Manage online store and inventory',
-      status: 'disconnected' as const
+      id: 'setup',
+      title: 'Connect Your Payment Source',
+      description: 'Set up your chosen payment tracking method',
     },
     {
-      id: 'quickbooks',
-      name: 'QuickBooks',
-      icon: '📊',
-      category: 'Accounting',
-      description: 'Manage finances and accounting',
-      status: 'disconnected' as const
-    },
-    {
-      id: 'paypal',
-      name: 'PayPal',
-      icon: '💰',
-      category: 'Payment Processing',
-      description: 'Process payments and transfers',
-      status: 'disconnected' as const
+      id: 'complete',
+      title: 'Setup Complete!',
+      description: 'You\'re ready to start recovering payments',
     },
   ];
 
-  // Mock business detection data
-  const mockBusinessData = {
-    businessModel: 'E-commerce + SaaS Hybrid',
-    revenueStreams: ['Product Sales', 'Subscription Revenue', 'Service Fees'],
-    expenses: [
-      { category: 'Marketing', amount: 5000, trend: 'up' as const },
-      { category: 'Software', amount: 1200, trend: 'stable' as const },
-      { category: 'Operations', amount: 3500, trend: 'down' as const },
-    ],
-    customers: {
-      total: 1250,
-      growth: 15,
-      segments: ['B2B', 'B2C', 'Enterprise'],
-    },
-    growthTrend: {
-      percentage: 23,
-      period: 'Last 30 days',
-      projection: 'Projected 45% growth in next quarter',
-    },
-    risks: [
-      {
-        type: 'High Customer Acquisition Cost',
-        severity: 'medium' as const,
-        description: 'CAC is 35% higher than industry average',
-      },
-      {
-        type: 'Revenue Concentration',
-        severity: 'low' as const,
-        description: 'Top 3 customers represent 40% of revenue',
-      },
-    ],
+  const handleMethodSelect = (method: 'stripe' | 'google-sheets' | 'manual') => {
+    setOnboardingState(prev => ({ ...prev, selectedMethod: method }));
+    setCurrentStep(1);
   };
 
-  const slideVariants = {
-    enter: (direction: number) => ({
-      x: direction > 0 ? 300 : -300,
-      opacity: 0,
-      scale: 0.95,
-      filter: 'blur(4px)',
-    }),
-    center: {
-      zIndex: 1,
-      x: 0,
-      opacity: 1,
-      scale: 1,
-      filter: 'blur(0px)',
-    },
-    exit: (direction: number) => ({
-      zIndex: 0,
-      x: direction < 0 ? 300 : -300,
-      opacity: 0,
-      scale: 0.95,
-      filter: 'blur(4px)',
-    }),
+  const handleStripeConnected = () => {
+    setOnboardingState(prev => ({ ...prev, stripeConnected: true }));
+    setCurrentStep(2);
   };
 
-  const [direction, setDirection] = useState(0);
+  const handleGoogleSheetsConnected = () => {
+    setOnboardingState(prev => ({ ...prev, googleSheetsConnected: true }));
+    setCurrentStep(2);
+  };
 
-  const paginate = (newDirection: number) => {
-    if (newDirection > 0 && currentStep < steps.length) {
-      setDirection(newDirection);
-      setCurrentStep((prev) => Math.min(steps.length, prev + 1));
-    } else if (newDirection < 0 && currentStep > 1) {
-      setDirection(newDirection);
-      setCurrentStep((prev) => Math.max(1, prev - 1));
+  const handleManualDataUploaded = () => {
+    setOnboardingState(prev => ({ ...prev, manualDataUploaded: true }));
+    setCurrentStep(2);
+  };
+
+  const handleCompleteOnboarding = async () => {
+    try {
+      // Mark onboarding as completed in backend
+      await completeOnboarding();
+      setOnboardingState(prev => ({ ...prev, setupComplete: true }));
+      
+      toast.success('🎉 Setup complete! You can now start tracking unpaid payments.');
+      
+      // Redirect to dashboard after a short delay
+      setTimeout(() => {
+        window.location.href = '/dashboard';
+      }, 2000);
+    } catch (error) {
+      console.error('Error completing onboarding:', error);
+      toast.error('Failed to complete setup. Please try again.');
     }
   };
 
-  const handleSelectSetupMethod = (method: 'connect' | 'upload' | 'manual') => {
-    setOnboardingState(prev => ({ ...prev, setupMethod: method }));
-    handleNext();
-  };
-
-  const handleConnectIntegration = (integrationId: string) => {
-    setOnboardingState(prev => ({
-      ...prev,
-      connectedIntegrations: [...prev.connectedIntegrations, integrationId]
-    }));
-  };
-
-  const handleDisconnectIntegration = (integrationId: string) => {
-    setOnboardingState(prev => ({
-      ...prev,
-      connectedIntegrations: prev.connectedIntegrations.filter(id => id !== integrationId)
-    }));
-  };
-
-  const handleDataUpload = (files: File[]) => {
-    setOnboardingState(prev => ({ ...prev, uploadedFiles: files }));
-    // Simulate AI processing
-    setTimeout(() => {
-      setOnboardingState(prev => ({ ...prev, businessData: mockBusinessData }));
-    }, 2000);
-  };
-
-  const handleConfigurationChange = (key: string, value: boolean) => {
-    setOnboardingState(prev => ({
-      ...prev,
-      configurations: { ...prev.configurations, [key]: value }
-    }));
-  };
-
-  const handleToggleAutomation = (templateId: string) => {
-    setOnboardingState(prev => ({
-      ...prev,
-      activeAutomations: prev.activeAutomations.includes(templateId)
-        ? prev.activeAutomations.filter(id => id !== templateId)
-        : [...prev.activeAutomations, templateId]
-    }));
-  };
-
-  const calculateBusinessHealthScore = () => {
-    const configScore = Object.values(onboardingState.configurations).filter(Boolean).length * 15;
-    const integrationScore = Math.min(onboardingState.connectedIntegrations.length * 10, 30);
-    const automationScore = Math.min(onboardingState.activeAutomations.length * 5, 25);
-    const baseScore = 30;
-    
-    const totalScore = Math.min(baseScore + configScore + integrationScore + automationScore, 100);
-    setOnboardingState(prev => ({ ...prev, businessHealthScore: totalScore }));
-  };
-
-  const handleNext = () => {
-    if (currentStep < steps.length) {
-      // Update onboarding step in auth store
-      updateOnboardingStep(currentStep);
-      paginate(1);
-    }
-  };
-
-  const handleBack = () => {
-    if (currentStep > 1) {
-      paginate(-1);
-    }
-  };
-
-  const handleStepComplete = (step: number, data: any) => {
-    console.log(`Step ${step} completed:`, data);
-  };
-
-  const handleOnboardingComplete = (data: any) => {
-    console.log('Onboarding completed:', data);
-    // Save to state and redirect
-    setOnboardingState(prev => ({
-      ...prev,
-      businessHealthScore: data.businessHealthScore
-    }));
-    
-    // Mark onboarding as completed in auth store
-    completeOnboarding();
-    
-    // Navigate to dashboard
-    window.location.href = '/dashboard';
-  };
-
-  const handleComplete = () => {
-    // Use the data collector to save
-    if (window.onboardingDataCollector) {
-      window.onboardingDataCollector.saveOnboarding();
-    } else {
-      handleOnboardingComplete(onboardingState);
-    }
-  };
-
-  const stepVariants = {
-    enter: (direction: number) => ({
-      x: direction > 0 ? 1000 : -1000,
-      opacity: 0,
-    }),
-    center: {
-      zIndex: 1,
-      x: 0,
-      opacity: 1,
-    },
-    exit: (direction: number) => ({
-      zIndex: 0,
-      x: direction < 0 ? 1000 : -1000,
-      opacity: 0,
-    }),
-  };
-
-  const renderStep = () => {
+  const renderStepContent = () => {
     switch (currentStep) {
+      case 0:
+        return (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-8"
+          >
+            <div className="text-center space-y-4">
+              <h2 className="text-3xl font-bold text-gray-900">
+                How do you want to track unpaid payments?
+              </h2>
+              <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+                Choose one method to start tracking and recovering your unpaid invoices
+              </p>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+              {/* Stripe Connection */}
+              <motion.div
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => handleMethodSelect('stripe')}
+                className="bg-white rounded-xl border-2 border-gray-200 p-6 cursor-pointer hover:border-blue-500 hover:shadow-lg transition-all"
+              >
+                <div className="flex flex-col items-center space-y-4">
+                  <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
+                    <CreditCard className="w-8 h-8 text-blue-600" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-gray-900">Connect Stripe</h3>
+                  <p className="text-gray-600 text-center text-sm">
+                    Automatically detect failed payments and unpaid invoices from your Stripe account
+                  </p>
+                  <div className="flex flex-wrap gap-2 justify-center">
+                    <span className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full">Automatic</span>
+                    <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full">Real-time</span>
+                  </div>
+                </div>
+              </motion.div>
+
+              {/* Google Sheets Connection */}
+              <motion.div
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => handleMethodSelect('google-sheets')}
+                className="bg-white rounded-xl border-2 border-gray-200 p-6 cursor-pointer hover:border-green-500 hover:shadow-lg transition-all"
+              >
+                <div className="flex flex-col items-center space-y-4">
+                  <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
+                    <FileSpreadsheet className="w-8 h-8 text-green-600" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-gray-900">Google Sheets</h3>
+                  <p className="text-gray-600 text-center text-sm">
+                    Connect your existing Google Sheets with invoice data to track overdue payments
+                  </p>
+                  <div className="flex flex-wrap gap-2 justify-center">
+                    <span className="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded-full">Easy Setup</span>
+                    <span className="px-2 py-1 bg-orange-100 text-orange-700 text-xs rounded-full">Flexible</span>
+                  </div>
+                </div>
+              </motion.div>
+
+              {/* Manual Upload */}
+              <motion.div
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => handleMethodSelect('manual')}
+                className="bg-white rounded-xl border-2 border-gray-200 p-6 cursor-pointer hover:border-purple-500 hover:shadow-lg transition-all"
+              >
+                <div className="flex flex-col items-center space-y-4">
+                  <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center">
+                    <Upload className="w-8 h-8 text-purple-600" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-gray-900">Upload Files</h3>
+                  <p className="text-gray-600 text-center text-sm">
+                    Upload CSV, Excel, or PDF files with your invoice data to get started quickly
+                  </p>
+                  <div className="flex flex-wrap gap-2 justify-center">
+                    <span className="px-2 py-1 bg-yellow-100 text-yellow-700 text-xs rounded-full">No Integration</span>
+                    <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full">Quick Start</span>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 max-w-2xl mx-auto">
+              <div className="flex items-start space-x-3">
+                <DollarSign className="w-5 h-5 text-blue-600 mt-0.5" />
+                <div>
+                  <h4 className="font-semibold text-blue-900">What happens next?</h4>
+                  <p className="text-blue-700 text-sm mt-1">
+                    Once connected, RevOps AI will automatically detect overdue payments and send follow-up reminders to help you recover lost revenue.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        );
+
       case 1:
         return (
           <motion.div
-            key="step1"
-            className="space-y-6"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
+            className="space-y-8"
           >
-            <SetupMethodSelector onSelectMethod={handleSelectSetupMethod} />
+            <div className="text-center space-y-4">
+              <h2 className="text-3xl font-bold text-gray-900">
+                {onboardingState.selectedMethod === 'stripe' && 'Connect Your Stripe Account'}
+                {onboardingState.selectedMethod === 'google-sheets' && 'Connect Google Sheets'}
+                {onboardingState.selectedMethod === 'manual' && 'Upload Your Invoice Data'}
+              </h2>
+              <p className="text-lg text-gray-600">
+                Follow the steps below to set up your payment tracking
+              </p>
+            </div>
+
+            <div className="max-w-2xl mx-auto">
+              {onboardingState.selectedMethod === 'stripe' && (
+                <StripeConnection onConnected={handleStripeConnected} />
+              )}
+              {onboardingState.selectedMethod === 'google-sheets' && (
+                <GoogleSheetsConnection onConnected={handleGoogleSheetsConnected} />
+              )}
+              {onboardingState.selectedMethod === 'manual' && (
+                <ManualDataUpload onUploaded={handleManualDataUploaded} />
+              )}
+            </div>
           </motion.div>
         );
 
       case 2:
         return (
           <motion.div
-            key="step2"
-            className="space-y-6"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
+            className="space-y-8"
           >
-            {onboardingState.setupMethod === 'connect' ? (
-              <ConnectedToolsFlow
-                onComplete={(connectedTools) => {
-                  setOnboardingState(prev => ({
-                    ...prev,
-                    connectedIntegrations: connectedTools
-                  }));
-                  handleNext();
-                }}
-                onBack={handleBack}
-              />
-            ) : onboardingState.setupMethod === 'upload' ? (
-              <div>
-                <h3 className="text-xl font-bold mb-4" style={{ color: 'var(--text-heading)' }}>
-                  Upload Your Business Data
-                </h3>
-                <DataUploadDropzone onUpload={handleDataUpload} />
-              </div>
-            ) : (
-              <ManualSetupFlow
-                onComplete={(manualData) => {
-                  setOnboardingState(prev => ({
-                    ...prev,
-                    businessData: manualData
-                  }));
-                  handleNext();
-                }}
-                onBack={handleBack}
-              />
-            )}
-          </motion.div>
-        );
-
-      case 3:
-        return (
-          <motion.div
-            key="step3"
-            className="space-y-6"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            <AIBusinessAnalysis />
-          </motion.div>
-        );
-
-      case 4:
-        return (
-          <motion.div
-            key="step4"
-            className="space-y-6"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            <IntelligentAutomationRecommender
-              configurations={onboardingState.configurations}
-              onConfigurationChange={handleConfigurationChange}
-            />
-            
-            <div>
-              <h3 className="text-xl font-bold mb-4" style={{ color: 'var(--text-heading)' }}>
-                Automation Starter Templates
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {automationTemplates.map((template) => (
-                  <AutomationTemplateCard
-                    key={template.id}
-                    template={{
-                      ...template,
-                      isActive: onboardingState.activeAutomations.includes(template.id)
-                    }}
-                    onToggle={handleToggleAutomation}
-                  />
-                ))}
-              </div>
-            </div>
-          </motion.div>
-        );
-
-      case 5:
-        return (
-          <motion.div
-            key="step5"
-            className="space-y-6"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            <AdvancedBusinessHealthScore
-              score={onboardingState.businessHealthScore || 72}
-              previousScore={65}
-              metrics={[
-                {
-                  category: 'Revenue Growth',
-                  score: 85,
-                  trend: 'up',
-                  previousScore: 78,
-                  industryAverage: 72,
-                  description: 'Strong revenue performance driven by SaaS subscriptions and enterprise expansion',
-                  details: {
-                    opportunities: ['Enterprise upsell potential', 'Seasonal demand increase', 'New market expansion'],
-                    toolContributions: [
-                      { tool: 'Stripe', value: '$12,300', syncStatus: 'synced' },
-                      { tool: 'QuickBooks', value: '$8,700', syncStatus: 'synced' },
-                      { tool: 'Custom CRM', value: '$5,200', syncStatus: 'pending' }
-                    ]
-                  },
-                  priority: 'medium',
-                  estimatedImpact: '+15% growth with optimization'
-                },
-                {
-                  category: 'Cost Efficiency',
-                  score: 72,
-                  trend: 'down',
-                  previousScore: 78,
-                  industryAverage: 68,
-                  description: 'Increasing operational costs due to new tool subscriptions and infrastructure scaling',
-                  details: {
-                    atRiskItems: ['Unused software licenses', 'Cloud storage overage', 'Marketing spend inefficiency'],
-                    toolContributions: [
-                      { tool: 'AWS', value: '$3,200/month', syncStatus: 'synced' },
-                      { tool: 'Adobe Creative', value: '$600/month', syncStatus: 'error' }
-                    ]
-                  },
-                  priority: 'high',
-                  estimatedImpact: '$2,400/month savings possible'
-                },
-                {
-                  category: 'Automation Level',
-                  score: 68,
-                  trend: 'up',
-                  previousScore: 45,
-                  industryAverage: 52,
-                  description: 'Good automation adoption with room for improvement in customer service workflows',
-                  details: {
-                    opportunities: ['Customer service automation', 'Invoice processing', 'Lead qualification'],
-                    toolContributions: [
-                      { tool: 'Zapier', value: '23 workflows', syncStatus: 'synced' },
-                      { tool: 'Custom API', value: '15 endpoints', syncStatus: 'synced' }
-                    ]
-                  },
-                  priority: 'medium',
-                  estimatedImpact: '+25 hours/week saved'
-                },
-                {
-                  category: 'Customer Retention',
-                  score: 75,
-                  trend: 'stable',
-                  previousScore: 74,
-                  industryAverage: 78,
-                  description: 'Stable retention with opportunities to improve through better engagement strategies',
-                  details: {
-                    atRiskItems: ['12 at-risk enterprise accounts', 'Declining product usage in segment B'],
-                    opportunities: ['Proactive success management', 'Personalized onboarding', 'Community building'],
-                    toolContributions: [
-                      { tool: 'Intercom', value: '89% satisfaction', syncStatus: 'synced' },
-                      { tool: 'Custom Analytics', value: 'Retention: 87%', syncStatus: 'synced' }
-                    ]
-                  },
-                  priority: 'high',
-                  estimatedImpact: '+8% retention improvement'
-                }
-              ]}
-              recommendations={[
-                {
-                  id: '1',
-                  title: 'Enable Lead Follow-up Automation',
-                  description: 'Automated lead nurturing will increase conversion rates by 23%',
-                  impact: '+$2,800/month revenue',
-                  priority: 'high',
-                  actionType: 'enable',
-                  targetTool: 'Lead Follow-up',
-                  estimatedValue: '$2,800/month',
-                  timeToImplement: '5 minutes',
-                  status: 'pending'
-                },
-                {
-                  id: '2',
-                  title: 'Connect QuickBooks for Better Cost Tracking',
-                  description: 'Real-time financial data will improve cost efficiency insights',
-                  impact: '$1,200/month savings',
-                  priority: 'medium',
-                  actionType: 'connect',
-                  targetTool: 'QuickBooks',
-                  estimatedValue: '$1,200/month',
-                  timeToImplement: '10 minutes',
-                  status: 'pending'
-                },
-                {
-                  id: '3',
-                  title: 'Activate Cost Monitoring Alerts',
-                  description: 'Prevent budget overruns with real-time spending alerts',
-                  impact: '$600/month savings',
-                  priority: 'medium',
-                  actionType: 'configure',
-                  estimatedValue: '$600/month',
-                  timeToImplement: '3 minutes',
-                  status: 'pending'
-                },
-                {
-                  id: '4',
-                  title: 'Optimize Customer Success Workflows',
-                  description: 'Proactive customer success will improve retention by 8%',
-                  impact: '+8% retention',
-                  priority: 'high',
-                  actionType: 'optimize',
-                  estimatedValue: '$4,500/month',
-                  timeToImplement: '15 minutes',
-                  status: 'pending'
-                }
-              ]}
-              achievements={[
-                {
-                  id: '1',
-                  title: 'Automation Beginner',
-                  description: 'Activate your first automation workflow',
-                  icon: '🚀',
-                  unlocked: true,
-                  progress: 1,
-                  target: 1
-                },
-                {
-                  id: '2',
-                  title: 'Revenue Hero',
-                  description: 'Optimize 3 revenue streams',
-                  icon: '💰',
-                  unlocked: true,
-                  progress: 2,
-                  target: 3
-                },
-                {
-                  id: '3',
-                  title: 'Cost Master',
-                  description: 'Save $5,000 through optimizations',
-                  icon: '📊',
-                  unlocked: false,
-                  progress: 2400,
-                  target: 5000
-                },
-                {
-                  id: '4',
-                  title: 'Customer Champion',
-                  description: 'Achieve 90% customer retention',
-                  icon: '⭐',
-                  unlocked: false,
-                  progress: 87,
-                  target: 90
-                }
-              ]}
-              onActionClick={(action, params) => {
-                console.log('Action clicked:', action, params);
-                // Handle the action (enable automation, connect tool, etc.)
-              }}
-            />
-          </motion.div>
-        );
-
-      case 6:
-        return (
-          <motion.div
-            key="step6"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            <EnhancedSetupComplete
-              connectedIntegrations={onboardingState.connectedIntegrations}
-              activeAutomations={onboardingState.activeAutomations}
-              businessHealthScore={onboardingState.businessHealthScore || 72}
-              onGoToDashboard={() => {
-                // Navigate to dashboard
-                console.log('Navigate to dashboard');
-                // router.push('/dashboard');
-              }}
-              onConnectMoreTools={() => {
-                setCurrentStep(2); // Go back to integrations step
-              }}
-              onExploreTemplates={() => {
-                setCurrentStep(4); // Go to automation templates step
-              }}
-              onActivateAutomation={(automationId: string) => {
-                setActiveAutomations((prev: string[]) => [...prev, automationId]);
-              }}
+            <V1SetupComplete
+              selectedMethod={onboardingState.selectedMethod}
+              onComplete={handleCompleteOnboarding}
             />
           </motion.div>
         );
@@ -634,179 +245,74 @@ export default function OnboardingPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4" style={{ backgroundColor: 'var(--background)' }}>
-      {/* Language Selector - Top Right */}
-      <div className="absolute top-4 right-4">
-        <LanguageSelector variant="header" />
-      </div>
-      
-      {/* Onboarding Data Collector */}
-      <OnboardingDataCollector
-        currentStep={currentStep}
-        onStepComplete={handleStepComplete}
-        onComplete={handleOnboardingComplete}
-      />
-      
-      <div className="w-full max-w-2xl">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold mb-2" style={{ color: 'var(--text-heading)' }}>
-            {t.setupBusiness}
-          </h1>
-          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-            {t.step} {currentStep} {t.of} {steps.length}
-          </p>
-        </div>
-
-        {/* Progress Bar */}
+      <div className="max-w-6xl mx-auto">
+        {/* Progress Indicator */}
         <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            {steps.map((step, index) => {
-              const Icon = step.icon;
-              const isActive = currentStep === index + 1;
-              const isCompleted = currentStep > index + 1;
-              
-              return (
-                <div key={step.id} className="flex items-center">
-                  <div
-                    className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
-                      isActive ? 'bg-blue-500 text-white' : isCompleted ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-600'
-                    }`}
-                  >
-                    {isCompleted ? (
-                      <CheckCircle className="w-5 h-5" />
-                    ) : (
-                      <Icon className="w-5 h-5" />
-                    )}
-                  </div>
-                  {index < steps.length - 1 && (
-                    <div
-                      className={`flex-1 h-1 mx-2 ${
-                        isCompleted ? 'bg-green-500' : 'bg-gray-200'
-                      }`}
-                    />
+          <div className="flex items-center justify-center space-x-4">
+            {steps.map((step, index) => (
+              <div key={step.id} className="flex items-center">
+                <div
+                  className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium ${
+                    index <= currentStep
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-200 text-gray-600'
+                  }`}
+                >
+                  {index < currentStep ? (
+                    <CheckCircle className="w-5 h-5" />
+                  ) : (
+                    index + 1
                   )}
                 </div>
-              );
-            })}
+                {index < steps.length - 1 && (
+                  <div
+                    className={`w-16 h-1 mx-2 ${
+                      index < currentStep ? 'bg-blue-600' : 'bg-gray-200'
+                    }`}
+                  />
+                )}
+              </div>
+            ))}
           </div>
-          
-          <div className="flex justify-between text-xs">
-            {steps.map((step) => (
-              <span key={step.id} className="text-center" style={{ color: 'var(--text-secondary)' }}>
-                {t[step.title as keyof typeof t]}
-              </span>
+          <div className="flex justify-center mt-4 space-x-8">
+            {steps.map((step, index) => (
+              <div
+                key={step.id}
+                className={`text-sm ${
+                  index <= currentStep ? 'text-blue-600 font-medium' : 'text-gray-500'
+                }`}
+              >
+                {step.title}
+              </div>
             ))}
           </div>
         </div>
 
-        {/* Form Content */}
-        <div className="bg-white rounded-xl shadow-lg p-8" style={{ backgroundColor: 'var(--surface)' }}>
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={currentStep}
-              custom={currentStep}
-              variants={stepVariants}
-              initial="enter"
-              animate="center"
-              exit="exit"
-              transition={{
-                x: { type: "spring", stiffness: 300, damping: 30 },
-                opacity: { duration: 0.2 }
-              }}
-            >
-              {renderStep()}
-            </motion.div>
-          </AnimatePresence>
+        {/* Step Content */}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={currentStep}
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.3 }}
+          >
+            {renderStepContent()}
+          </motion.div>
+        </AnimatePresence>
 
-          {/* Navigation */}
-          <div className="flex justify-between items-center mt-12 pt-8 border-t border-gray-100">
-            <motion.button
-              whileHover={{ scale: 1.03, x: -3 }}
-              whileTap={{ scale: 0.97 }}
-              onClick={handleBack}
-              disabled={currentStep === 1}
-              className={`group relative flex items-center space-x-3 px-8 py-4 rounded-2xl font-bold transition-all duration-500 transform lg:px-12 lg:w-48 w-auto ${
-                currentStep === 1
-                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed opacity-50'
-                  : 'bg-white text-gray-700 hover:bg-gray-50 border-2 border-gray-200 hover:border-gray-300 shadow-lg hover:shadow-xl'
-              }`}
+        {/* Navigation */}
+        {currentStep > 0 && currentStep < 2 && (
+          <div className="flex justify-center mt-8">
+            <button
+              onClick={() => setCurrentStep(currentStep - 1)}
+              className="flex items-center space-x-2 px-6 py-3 text-gray-600 hover:text-gray-900 transition-colors"
             >
-              {/* Button Gradient Background */}
-              {currentStep > 1 && (
-                <div className="absolute inset-0 bg-linear-to-r from-gray-50 to-gray-100 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              )}
-              
-              {/* Button Content */}
-              <div className="relative flex items-center space-x-3">
-                <motion.div
-                  whileHover={{ rotate: -15 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <ArrowLeft className="w-5 h-5" />
-                </motion.div>
-                <span>{t.back}</span>
-              </div>
-            </motion.button>
-
-            <motion.button
-              whileHover={{ scale: 1.03, x: 3, y: -2 }}
-              whileTap={{ scale: 0.97 }}
-              onClick={currentStep === steps.length ? handleComplete : handleNext}
-              className="group relative flex items-center justify-center space-x-3 px-10 py-5 rounded-2xl font-bold text-white shadow-2xl hover:shadow-3xl transition-all duration-500 transform border border-white/20 backdrop-blur-sm lg:px-16 lg:w-56 w-auto"
-              style={{
-                background: 'linear-gradient(135deg, #3B82F6 0%, #2563EB 25%, #6366F1 50%, #8B5CF6 75%, #7C3AED 100%)',
-                boxShadow: '0 10px 25px -5px rgba(59, 130, 246, 0.25), 0 0 20px rgba(59, 130, 246, 0.1)'
-              }}
-            >
-              {/* Animated Glow Effect */}
-              <div className="absolute inset-0 rounded-2xl bg-linear-to-r from-blue-400/20 to-purple-400/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-xl" />
-              
-              {/* Shimmer Effect */}
-              <div className="absolute inset-0 rounded-2xl overflow-hidden">
-                <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
-              </div>
-              
-              {/* Button Content */}
-              <div className="relative flex items-center space-x-3">
-                <span className="text-lg drop-shadow-lg">
-                  {currentStep === steps.length ? 'Go to Dashboard' : 'Next Step'}
-                </span>
-                <motion.div
-                  animate={{ x: [0, 5, 0] }}
-                  transition={{ duration: 1.5, repeat: Infinity }}
-                  whileHover={{ x: 8 }}
-                >
-                  <ArrowRight className="w-6 h-6 drop-shadow-lg" />
-                </motion.div>
-              </div>
-              
-              {/* Particle Effects on Hover */}
-              <div className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none">
-                {[...Array(3)].map((_, i) => (
-                  <motion.div
-                    key={i}
-                    className="absolute w-1 h-1 bg-white rounded-full"
-                    initial={{ 
-                      x: i * 33 + 10, 
-                      y: 100, 
-                      opacity: 0 
-                    }}
-                    whileHover={{
-                      y: -20,
-                      opacity: [0, 1, 0],
-                      transition: {
-                        duration: 1,
-                        delay: i * 0.1,
-                        repeat: Infinity,
-                        repeatDelay: 2
-                      }
-                    }}
-                  />
-                ))}
-              </div>
-            </motion.button>
+              <ArrowLeft className="w-4 h-4" />
+              <span>Back</span>
+            </button>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

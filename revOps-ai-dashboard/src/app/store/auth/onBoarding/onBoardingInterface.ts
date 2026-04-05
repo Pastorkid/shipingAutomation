@@ -4,10 +4,12 @@ export interface OnBoardingState {
   error: string | null;
   onboardingStep: number;
   onboardingCompleted: boolean;
+  businessConfigCompleted: boolean;
   
   // Actions
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
   updateOnboardingStep: (step: number) => void;
   completeOnboarding: () => void;
+  completeBusinessConfig: () => void;
 }

@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
 
   try {
     // Redirect to backend OAuth endpoint
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+    const API_URL = process.env.NEXT_PUBLIC_SERVER_LOCAL_URL || 'http://localhost:3001';
     // Use LinkedIn OIDC endpoint for LinkedIn provider
     const backendUrl = provider === 'linkedin' 
       ? `${API_URL}/auth/linkedin-oidc`

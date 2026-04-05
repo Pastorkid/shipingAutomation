@@ -14,6 +14,11 @@ export default async function proxy(request: NextRequest) {
       requiresEmailVerified: true,
       requiresOnboardingCompleted: true,
     },
+    '/onboarding/business-config': {
+      requiresAuth: true,
+      requiresEmailVerified: true,
+      requiresBusinessConfigNotCompleted: true,
+    },
     '/onboarding': {
       requiresAuth: true,
       requiresEmailVerified: true,
@@ -152,7 +157,33 @@ export default async function proxy(request: NextRequest) {
         return NextResponse.redirect(verifyUrl);
       }
 
-      // Check onboarding completion
+      // Check business configuration completion (NEW STEP - Step 0)
+      if (route === '/dashboard' && 'requiresOnboardingCompleted' in config && config.requiresOnboardingCompleted && !user.businessConfigCompleted) {
+        console.log('🏢 BUSINESS CONFIG INCOMPLETE - REDIRECT TO BUSINESS CONFIG');
+        return NextResponse.redirect(new URL('/onboarding/business-config', request.url));
+      }
+
+      // Handle business config route specifically
+      if (route === '/onboarding/business-config') {
+        console.log('🔍 BUSINESS CONFIG ROUTE ACCESS:', { 
+          businessConfigCompleted: user.businessConfigCompleted,
+          hasConfig: 'requiresBusinessConfigNotCompleted' in config,
+          requiresNotCompleted: 'requiresBusinessConfigNotCompleted' in config ? config.requiresBusinessConfigNotCompleted : 'N/A'
+        });
+        
+        if ('requiresBusinessConfigNotCompleted' in config && config.requiresBusinessConfigNotCompleted && user.businessConfigCompleted) {
+          console.log('✅ BUSINESS CONFIG COMPLETE - REDIRECT TO ONBOARDING');
+          return NextResponse.redirect(new URL('/onboarding', request.url));
+        }
+      }
+
+      // If user is trying to access onboarding but hasn't completed business config, redirect to business config first
+      if (route === '/onboarding' && !user.businessConfigCompleted) {
+        console.log('🏢 USER TRYING ONBOARDING WITHOUT BUSINESS CONFIG - REDIRECT TO BUSINESS CONFIG');
+        return NextResponse.redirect(new URL('/onboarding/business-config', request.url));
+      }
+
+      // Check onboarding completion (AFTER business config)
       if (route === '/dashboard' && 'requiresOnboardingCompleted' in config && config.requiresOnboardingCompleted && !user.onboardingCompleted) {
         console.log('📋 ONBOARDING INCOMPLETE - REDIRECT TO ONBOARDING');
         return NextResponse.redirect(new URL('/onboarding', request.url));

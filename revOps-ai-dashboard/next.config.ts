@@ -16,7 +16,7 @@ const nextConfig: NextConfig = {
   },
   // OAuth proxy configuration
   async rewrites() {
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+    const API_URL = process.env.NEXT_PUBLIC_SERVER_LOCAL_URL || 'http://localhost:3001';
     
     return [
       {
